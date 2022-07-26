@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:provider_and_preference_demo_app/src/provider/home_provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider_and_preference_demo_app/src/bloc/name_bloc/name_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../bloc/email_bloc/email_bloc.dart';
 import 'register_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -13,6 +14,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  late NameBloc nameBloc;
+  late EmailBloc emailBloc;
+
   Future checkLogin() async {
     final SharedPreferences sharedPreferences =
         await SharedPreferences.getInstance();
@@ -27,13 +31,18 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     }
-
-    context.read<HomeProvider>().fetchNameAndEmail();
   }
 
   @override
   void initState() {
+    nameBloc = NameBloc();
+    emailBloc = EmailBloc();
+
+    nameBloc.add(GetName());
+    emailBloc.add(GetEmail());
+
     checkLogin();
+
     super.initState();
   }
 
@@ -50,26 +59,37 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             /// Name Text
-            Consumer<HomeProvider>(
-              builder: (context, provider, _) {
-                return Text(
-                  'Hello, ${provider.name ?? 'Name'}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                );
+            BlocBuilder<NameBloc, NameState>(
+              bloc: nameBloc,
+              builder: (context, state) {
+                if (state is Loading) {
+                  return const CircularProgressIndicator();
+                } else if (state is Success) {
+                  return Text(
+                    'Hello, ${state.name}',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  );
+                } else {
+                  return const SizedBox();
+                }
               },
             ),
 
             /// Email Text
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Consumer<HomeProvider>(
-                builder: (context, provider, _) {
+            BlocBuilder<EmailBloc, EmailState>(
+              bloc: emailBloc,
+              builder: (context, state) {
+                if (state is EmailLoading) {
+                  return const CircularProgressIndicator();
+                } else if (state is EmailSuccess) {
                   return Text(
-                    provider.email ?? 'name@mail.com',
+                    state.email,
                     style: Theme.of(context).textTheme.headlineMedium,
                   );
-                },
-              ),
+                } else {
+                  return const SizedBox();
+                }
+              },
             ),
 
             /// Logout Button
@@ -83,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => RegisterScreen(),
+                    builder: (context) => const RegisterScreen(),
                   ),
                 );
               },
