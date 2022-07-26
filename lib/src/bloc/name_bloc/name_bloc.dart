@@ -14,7 +14,7 @@ class NameBloc extends Bloc<NameEvent, NameState> {
         final SharedPreferences preferences =
             await SharedPreferences.getInstance();
 
-        final String name = preferences.getString('name')!;
+        final String name = preferences.getString('name') ?? 'Name';
 
         emit(Success(name));
       },

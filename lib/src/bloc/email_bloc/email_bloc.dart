@@ -14,7 +14,7 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
         final SharedPreferences preferences =
             await SharedPreferences.getInstance();
 
-        final String email = preferences.getString('email')!;
+        final String email = preferences.getString('email') ?? 'name@mail.com';
 
         emit(EmailSuccess(email));
       },
